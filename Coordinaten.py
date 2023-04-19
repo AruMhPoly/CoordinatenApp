@@ -7,6 +7,7 @@ import os
 #In[]: 
 
 class ArcGIS:
+    
     def __init__(self,project_name='Project Mh Poly'):
 
         self.project_name = project_name
@@ -14,7 +15,7 @@ class ArcGIS:
     def Results(self):
 
         # Connect to your ArcGIS Online organization
-        gis = #Deleted due to privacy reasons
+        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "n1H1p1*HZEO3")
 
         # Search for the feature layer by its name
         feature_layer_name = self.project_name
@@ -44,8 +45,7 @@ class ArcGIS:
 
                 
         # Connect to your ArcGIS Online organization
-        gis = #Deleted due to privacy reasons
-
+        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "n1H1p1*HZEO3")
         layer_item = gis.content.get(NP)
         point_layer = None
         feature_layer  = layer_item.layers
@@ -67,12 +67,18 @@ class ArcGIS:
             coords.append([x, y])
             attributes = feature.attributes
             labels.append(attributes['NR'])
-            Project.append(attributes['Opmerking'])
+            try:
+                Project.append(attributes['Projectnummer'])
+            except: 
+                pass
 
         df = pd.DataFrame(coords, columns=['X', 'Y'])
         df =df.round(0).astype(int)
         df['NR'] = labels
-        df['Project'] = Project
+        #In case we have more than one project saved in the same layer. Think HBR of IJmuiden
+        if len(Project)>1:
+            df['Project'] = Project
+        df.sort_values(by=['NR'], inplace=True)
         df.set_index('NR',inplace=True)
         return df 
 
@@ -83,6 +89,10 @@ class ArcGIS:
         self.Download(filtered_df)
         
     def Download(self,pandas):
+        try:
+            pandas = pandas.drop('Project', axis=1)
+        except:
+            pass 
         # Define the destination folder path
         userhome = os.path.expanduser('~')
         downloads_folder = os.path.join(userhome, 'Downloads')

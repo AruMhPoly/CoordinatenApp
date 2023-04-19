@@ -34,7 +34,7 @@ class Vista:
 
         # Imagen Escuela
 
-        image1 = Image.open(f"C:\Python\Coordinaten\Logo\Logo.jpeg")
+        image1 = Image.open(f"C:\Python\Coordinaten_App\Logo\Logo.jpeg")
         test = ImageTk.PhotoImage(image1)
         label1 = tk.Label(image=test)
         label1.grid(row=0, column=0,columnspan = 3)
@@ -96,7 +96,7 @@ class Vista:
                 Project.Download(Pandas)
                 window.destroy()
 
-    def SpecificProjectDownload(self):          
+    def SpecificProjectDownload(self):        
             Project = ArcGIS(self.Project_Number.get())
             Pandas = ArcGIS().get_coordinates(Project.Results())
             Filtered_Df = ArcGIS().filter_dataframe(Pandas,SpecificProject=project_combobox.get())
