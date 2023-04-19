@@ -32,7 +32,7 @@ class Vista:
         welcome_frame.grid(row=1, column=0,pady=7,columnspan = 3)
         welcome_frame.grid(sticky=tk.E + tk.W + tk.N + tk.S)
 
-        # Imagen Escuela
+        # Logo
 
         image1 = Image.open(f"C:\Python\Coordinaten_App\Logo\Logo.jpeg")
         test = ImageTk.PhotoImage(image1)
@@ -40,7 +40,7 @@ class Vista:
         label1.grid(row=0, column=0,columnspan = 3)
         label1.image = test
 
-        # Texto de bievenida
+        # Welcome Text
 
         window.title("Coördinaten uit ArcGIS Online")
         lbl_welcome = Label(welcome_frame,
@@ -50,18 +50,18 @@ class Vista:
         # Frame Buttom search
         global buttons_frame
         buttons_frame = tk.LabelFrame(window, text="Project gegevens", relief=tk.RIDGE)
-        buttons_frame.grid(row=2, sticky="nsew",pady = 5)
+        buttons_frame.grid(row=3, sticky="nsew",pady = 5)
+
+        #Frame format 
+
+        Format_frame = tk.LabelFrame(window, text="Gewenst formaat", relief=tk.RIDGE)
+        Format_frame.grid(row=2, sticky="nsew",pady = 5)
 
         # Frame Créditos
 
         credit_frame = tk.LabelFrame(window,
                                             text="Contact persoon", relief=tk.RIDGE)
         credit_frame.grid(row=6, sticky="nsew", pady=5)
-        # Texto de Créditos
-
-        Label(credit_frame,text="Gecrëerd door: MH Poly").grid(row=0, sticky="nsew", pady=2)
-        Label(credit_frame, text="E-mail: aru@mhpoly.com").grid(row=1, sticky="nsew", pady=2)
-        Label(credit_frame, text="Telefoon nummer: +31 (0)164 245 566").grid(row=2, sticky="nsew", pady=2)
 
         #Coordinates button
 
@@ -76,12 +76,31 @@ class Vista:
 
         ttk.Entry(buttons_frame, width=20, textvariable= self.Project_Number
                   ).grid(row=1,column=1,sticky=tk.E + tk.W + tk.N + tk.S, pady=5,)
+        
+
+        # Create a combobox to select the desired format
+        global Format_Combobox
+        Format_Combobox = ttk.Combobox(Format_frame, width=20, values=["punt scheidingsteken", "komma scheidingsteken","Excel Bestand"]
+            )
+        Format_Combobox.grid(row=0,column=2,sticky=tk.E + tk.W + tk.N + tk.S, pady=5,)
+        Format_Combobox.current(0)
+        Label(Format_frame,text="Formaat:").grid(row=0, column = 1, sticky="nsew", pady=10)
+        
+        # Texto de Créditos
+
+        Label(credit_frame,text="Gecrëerd door: MH Poly").grid(row=0, sticky="nsew", pady=2)
+        Label(credit_frame, text="E-mail: aru@mhpoly.com").grid(row=1, sticky="nsew", pady=2)
+        Label(credit_frame, text="Telefoon nummer: +31 (0)164 245 566").grid(row=2, sticky="nsew", pady=2)
  
 
     def Coordinaten(self):
             Project = ArcGIS(self.Project_Number.get())
             Pandas = ArcGIS().get_coordinates(Project.Results())
-            unique_projects = Pandas['Project'].unique().tolist()
+            try:
+                unique_projects = Pandas['Project'].unique().tolist()
+            except: 
+                #NVT = Niet van Toepassing
+                 unique_projects = ["NVT"]
             if len(unique_projects) >= 2:
                 # Create a combobox to select the project
                 global project_combobox
@@ -93,13 +112,13 @@ class Vista:
                 ,command = self.SpecificProjectDownload)
                 DownloadProject.grid(row=2,column=0, padx=0,pady=0)
             else:
-                Project.Download(Pandas)
+                Project.Download(Pandas,format=Format_Combobox.get())
                 window.destroy()
 
     def SpecificProjectDownload(self):        
             Project = ArcGIS(self.Project_Number.get())
             Pandas = ArcGIS().get_coordinates(Project.Results())
-            Filtered_Df = ArcGIS().filter_dataframe(Pandas,SpecificProject=project_combobox.get())
+            Filtered_Df = ArcGIS().filter_dataframe(Pandas,SpecificProject=project_combobox.get(),Format_Output=Format_Combobox.get())
             window.destroy()
         
 # Create the entire GUI program

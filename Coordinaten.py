@@ -31,8 +31,8 @@ class ArcGIS:
                 break
             if Names[i] == '22131N1-TE02 WBO IJmuiden Uitvoering WF':
                 NP = results[i].id
-                LayerName = "Boringen_IJmuiden"
                 return NP
+                LayerName = "Boringen_IJmuiden"
                 break
 
         NP = results[0].id
@@ -83,12 +83,13 @@ class ArcGIS:
         return df 
 
     
-    def filter_dataframe(self,pandas,SpecificProject):
+    def filter_dataframe(self, pandas, SpecificProject, Format_Output="punt scheidingsteken"):
         filtered_df = pandas[pandas['Project'] == SpecificProject]
-        # return(filtered_df)
-        self.Download(filtered_df)
+        self.Download(filtered_df, format=Format_Output)
+
+
         
-    def Download(self,pandas):
+    def Download(self,pandas,format="punt scheidingsteken"):
         try:
             pandas = pandas.drop('Project', axis=1)
         except:
@@ -96,20 +97,34 @@ class ArcGIS:
         # Define the destination folder path
         userhome = os.path.expanduser('~')
         downloads_folder = os.path.join(userhome, 'Downloads')
-        Name_File = "NR.X.Y v1.0 Coördinaten_" + LayerName + ".txt"
+        Name_File = "NR.X.Y v1.0 Coördinaten_" + LayerName 
         f = os.path.join(downloads_folder, Name_File)
-        # write the DataFrame to a text file with values separated by a "."
-        # pandas = pandas.drop('Project', axis=1)
-        pandas.to_csv(f, sep='.', index=True)
-        # Open the file for reading
-        with open(f, 'r') as file:
-            # Read the contents of the file
-            contents = file.read()
-            # Replace double quotes with a space
-            contents = contents.replace('"', ' ')
-        # Open the file for writing
-        with open(f, 'w') as file:
-            # Write the modified contents to the file
-            file.write(contents)
+        if format == "punt scheidingsteken":
+            pandas.to_csv(f + ".txt", sep='.', index=True)
+            # Open the file for reading
+            with open(f + ".txt", 'r') as file:
+                # Read the contents of the file
+                contents = file.read()
+                # Replace double quotes with a space
+                contents = contents.replace('"', ' ')
+            # Open the file for writing
+            with open(f + ".txt", 'w') as file:
+                # Write the modified contents to the file
+                file.write(contents)
+        elif format == "komma scheidingsteken":
+            pandas.to_csv(f + ".txt", sep=',', index=True)
+            # Open the file for reading
+            with open(f + ".txt", 'r') as file:
+                # Read the contents of the file
+                contents = file.read()
+                # Replace double quotes with a space
+                contents = contents.replace('"', ' ')
+                contents = contents.replace(',', ', ')
+            # Open the file for writing
+            with open(f + ".txt", 'w') as file:
+                # Write the modified contents to the file
+                file.write(contents)
+        elif format == "Excel Bestand":
+            pandas.to_excel(f + ".xlsx")
 
 #In[]:
