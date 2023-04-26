@@ -85,11 +85,17 @@ class ArcGIS:
     
     def filter_dataframe(self, pandas, SpecificProject, Format_Output="punt scheidingsteken"):
         filtered_df = pandas[pandas['Project'] == SpecificProject]
+        global HBR_Project
+        HBR_Project = SpecificProject
         self.Download(filtered_df, format=Format_Output)
 
 
         
     def Download(self,pandas,format="punt scheidingsteken"):
+        if LayerName == "Boringen_HBR" or LayerName == "Boringen_IJmuiden":
+            NameDoc = HBR_Project
+        else:
+            NameDoc = LayerName
         try:
             pandas = pandas.drop('Project', axis=1)
         except:
@@ -97,7 +103,7 @@ class ArcGIS:
         # Define the destination folder path
         userhome = os.path.expanduser('~')
         downloads_folder = os.path.join(userhome, 'Downloads')
-        Name_File = "NR.X.Y v1.0 Coördinaten_" + LayerName 
+        Name_File = "NR.X.Y v1.0 Coördinaten_" + NameDoc 
         f = os.path.join(downloads_folder, Name_File)
         if format == "punt scheidingsteken":
             pandas.to_csv(f + ".txt", sep='.', index=True)
