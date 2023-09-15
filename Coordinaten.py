@@ -3,6 +3,8 @@
 from arcgis.gis import GIS
 import pandas as pd
 import os 
+from tkinter import messagebox
+from ExportSHP  import ExportSHP
 
 #In[]: 
 
@@ -14,38 +16,55 @@ class ArcGIS:
 
     def Results(self):
 
+        global gis
         # Connect to your ArcGIS Online organization
-        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "n1H1p1*HZEO3")
+        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "4aNTW$qrD*Hu$cA")
 
         # Search for the feature layer by its name
         feature_layer_name = self.project_name
         results = gis.content.search(query=feature_layer_name, item_type="Feature Layer")
 
-        global LayerName
-        Names = [x.name for x in results]
-        for i in range(len(Names)):
-            if Names[i] == 'Boringen_HBR':
-                NP = results[i].id
-                LayerName = "Boringen_HBR"
-                return NP
-                break
-            if Names[i] == '22131N1-TE02 WBO IJmuiden Uitvoering WF':
-                NP = results[i].id
-                return NP
-                LayerName = "Boringen_IJmuiden"
-                break
+        if len(results) != 0: 
 
-        NP = results[0].id
-        item = gis.content.get(NP)
-        LayerName = item.name
-        return NP
+            # x.name is the name of the web feature layer! 
+            Names = [x.name for x in results]
+            for i in range(len(Names)):
+                if Names[i] == 'Boringen_HBR':
+                    ProjectName = Names [i]
+                    NP = results[i].id
+                    LayerName = "Boringen_HBR"
+                    return ProjectName,LayerName,NP
+                    break
 
+                elif Names[i] == '22131V1_TE01_WBO_IJmuiden_Uitvoering_WFL1':
+                    ProjectName = Names [i]
+                    LayerName = "Boringen_IJmuiden"
+                    NP = results[i].id
+                    return ProjectName,LayerName,NP
+                    break
+            
+            for x in range(len(results)): 
+                NP = results[x].id
+                item = gis.content.get(NP)
+                point_layer = None
+                feature_layer  = item.layers
+                for layer in item.layers:
+                    if layer.properties.geometryType == "esriGeometryPoint":
+                        ProjectName = item.name
+                        point_layer = layer
+                        LayerName = point_layer.properties.name
+                        return ProjectName,LayerName,NP
+                        break
+        
+        else:
+
+            message = "Er is geeen project {} gevonden. Probeer het nog eens!".format(self.project_name)
+            # Display the messagebox
+            messagebox.showwarning("Warning", message)
+    
             
     def get_coordinates(self,NP):
 
-                
-        # Connect to your ArcGIS Online organization
-        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "n1H1p1*HZEO3")
         layer_item = gis.content.get(NP)
         point_layer = None
         feature_layer  = layer_item.layers
@@ -80,26 +99,48 @@ class ArcGIS:
             df['Project'] = Project
         df.sort_values(by=['NR'], inplace=True)
         df.set_index('NR',inplace=True)
-        return df 
+        return df
 
     
-    def filter_dataframe(self, pandas, SpecificProject, Format_Output="punt scheidingsteken"):
+    def filter_dataframe(self, pandas, SpecificProject, Format_Output="punt scheidingsteken",
+                         ProjectName = "Project MH Poly",LayerName= "Boringen_23xxxx"):
         filtered_df = pandas[pandas['Project'] == SpecificProject]
-        self.Download(filtered_df, format=Format_Output)
-
+        global Specific_Project
+        Specific_Project = SpecificProject
+        PN = ProjectName
+        LN = LayerName
+        self.Download(filtered_df, format=Format_Output,ProjectName=PN,LayerName=LN)
 
         
-    def Download(self,pandas,format="punt scheidingsteken"):
+    def Download(self,pandas,format="punt scheidingsteken",
+                 ProjectName = "Project MH Poly",LayerName= "Boringen_23xxxx"):
+        if LayerName == "Boringen_HBR" or LayerName == "Boringen_IJmuiden":
+            NameDoc = Specific_Project
+        else:
+            NameDoc = LayerName
         try:
             pandas = pandas.drop('Project', axis=1)
         except:
             pass 
-        # Define the destination folder path
-        userhome = os.path.expanduser('~')
-        downloads_folder = os.path.join(userhome, 'Downloads')
-        Name_File = "NR.X.Y v1.0 Coördinaten_" + LayerName 
-        f = os.path.join(downloads_folder, Name_File)
+############################################ Download Data #######################################################
+        
         if format == "punt scheidingsteken":
+        
+            Name_File = "NR.X.Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
+
+        elif format == "komma scheidingsteken": 
+
+            Name_File = "NR,X,Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
+
+        else: 
+
+            Name_File = "NR.X.Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
+
+        # First, I will see if the folder exists in the P drive
+        f = os.path.join(ExportSHP(self.project_name).CreateFolderToSave(),Name_File)
+
+        if format == "punt scheidingsteken":
+            
             pandas.to_csv(f + ".txt", sep='.', index=True)
             # Open the file for reading
             with open(f + ".txt", 'r') as file:
@@ -126,5 +167,19 @@ class ArcGIS:
                 file.write(contents)
         elif format == "Excel Bestand":
             pandas.to_excel(f + ".xlsx")
+
+        message = f"De cöordinaten van de laag {NameDoc} voor het project {ProjectName} werd opgeslagen in de route: {f}"
+        # Display the messagebox
+        messagebox.showwarning("Warning", message)
+
+
+#In[]:
+
+# #Testen 
+
+# T = ArcGIS("23046")
+# R = (T.Results())
+# df = (T.get_coordinates(R[2]))
+# T.Download(pandas= df, ProjectName=R[0],LayerName=R[1])
 
 #In[]:
