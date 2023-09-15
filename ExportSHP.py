@@ -11,26 +11,32 @@ class ExportSHP:
     def __init__(self,project_name = "Project Mh Poly"): 
         #Name of the project
         self.project_name = project_name
-        self.directory_path = r'P:\2023'
+
 
     def CreateFolderToSave(self):
+
+         
+        directory_path = [r'P:\2023',r'P:\2022']
+
+        for d in directory_path:
+
+            #I will look in 2022 and 2022 directory to see where can I save it 
+            Matchingfolder = [name for name in os.listdir(d) if 
+                            os.path.isdir(os.path.join(d, name)) 
+                            and self.project_name in name]
         
-        #It does not create the general path where everything will be saved. But it looks where it can be saved.
-        Matchingfolder = [name for name in os.listdir(self.directory_path) if 
-                          os.path.isdir(os.path.join(self.directory_path, name)) 
-                          and self.project_name in name]
+            if len(Matchingfolder)!=0:
+                f = os.path.join(d, Matchingfolder[0])
+                WorkFolder = os.path.join(f,"V1","07 Tekeningen","Werkmap M&R") # First with the new structure 
+                if not os.path.exists(WorkFolder): 
+                    WorkFolder = os.path.join(f,"V1","05 Tekeningen","Werkmap") # Try with the old structure
+                return WorkFolder
+                break
+            else: #Otherwise just save it in downloads
+                    userhome = os.path.expanduser('~')
+                    WorkFolder = os.path.join(userhome, 'Downloads')
+                    return WorkFolder
         
-        if len(Matchingfolder) != 0:
-            f = os.path.join(self.directory_path, Matchingfolder[0])
-            # Get a list of all folders inside f
-            folders = [name for name in os.listdir(f) if os.path.isdir(os.path.join(f, name))]
-            first_folder = os.path.join(f, folders[0])
-            save_path =  os.path.join(first_folder, "05 Tekeningen", "Werkmap")
-            return save_path
-        else: 
-            save_path = "Geen oveenkomende map gevonden! "
-            return save_path
-    
     def ArcGISConnection(self):
         global gis
         # Connect to your ArcGIS Online organization
@@ -93,6 +99,7 @@ class ExportSHP:
 
 
     def DownloadLayer(self, NameLayer,save_path):
+        
         for layer in feature_layer:
             if layer.properties.name == NameLayer:
                 Layer_To_Download = layer
@@ -109,18 +116,17 @@ class ExportSHP:
             downloads_folder = os.path.join(userhome, 'Downloads')
             output_folder = os.path.join(downloads_folder, "SHP_" + self.project_name + "_" +
                             Layer_To_Download.properties.name)
-
-
-        # Define the fields to be downloaded
-        fields = ['NR', 'X','Y']
+            os.makedirs(output_folder, exist_ok=True)
 
         try: 
             #For the boringen layer
             # Query the feature layer and download the results as a SHP file
+            print(Layer_To_Download.properties.name)
             query_result = Layer_To_Download.query(where="1=1", out_fields=["NR,X,Y"], return_geometry=True)
             query_result.save(out_name = Layer_To_Download.properties.name + ".shp", save_location = output_folder)
 
         except: 
+            
             try:
             #For the vakken layer
                 # Query the feature layer and download the results as a SHP file

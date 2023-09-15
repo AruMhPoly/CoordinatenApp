@@ -9,9 +9,6 @@ from Coordinaten import ArcGIS
 from ExportSHP  import ExportSHP
 from tkinter import messagebox
 
-#In[]: 
-
-
 window = tk.Tk()
 
 # window.geometry("550x300+300+150")
@@ -74,7 +71,7 @@ class Vista:
         text="Gewenst formaat:").grid(row=0, column=0, pady=5, sticky="w")
 
         Label(CöordinatenFrame,
-        text="Database raadplagen:").grid(row=1, column=0, pady=5, sticky="w")
+        text="Database raadplegen:").grid(row=1, column=0, pady=5, sticky="w")
 
         #Coordinates button
 

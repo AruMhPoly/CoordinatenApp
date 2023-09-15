@@ -18,7 +18,7 @@ class ArcGIS:
 
         global gis
         # Connect to your ArcGIS Online organization
-        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "n1H1p1*HZEO3")
+        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "4aNTW$qrD*Hu$cA")
 
         # Search for the feature layer by its name
         feature_layer_name = self.project_name
@@ -123,17 +123,24 @@ class ArcGIS:
         except:
             pass 
 ############################################ Download Data #######################################################
-        Name_File = "NR.X.Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
+        
+        if format == "punt scheidingsteken":
+        
+            Name_File = "NR.X.Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
+
+        elif format == "komma scheidingsteken": 
+
+            Name_File = "NR,X,Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
+
+        else: 
+
+            Name_File = "NR.X.Y v1.0 Coördinaten_" + ProjectName + "_" + NameDoc 
 
         # First, I will see if the folder exists in the P drive
-        GP = ExportSHP(self.project_name).CreateFolderToSave()
-        if os.path.exists(GP):
-            f = os.path.join(GP, Name_File)
-        else: 
-            userhome = os.path.expanduser('~')
-            downloads_folder = os.path.join(userhome, 'Downloads')
-            f = os.path.join(downloads_folder, Name_File)
+        f = os.path.join(ExportSHP(self.project_name).CreateFolderToSave(),Name_File)
+
         if format == "punt scheidingsteken":
+            
             pandas.to_csv(f + ".txt", sep='.', index=True)
             # Open the file for reading
             with open(f + ".txt", 'r') as file:
