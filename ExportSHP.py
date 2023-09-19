@@ -3,18 +3,20 @@ from arcgis.gis import GIS
 import os 
 import zipfile
 from tkinter import messagebox
+from Credentials import GisCredentials
 
 #In[]:
 
 class ExportSHP:
 
-    def __init__(self,project_name = "Project Mh Poly"): 
+    def __init__(self,project_name): 
         #Name of the project
         self.project_name = project_name
-
+        # Username and password extracted from another class 
+        self.username =  GisCredentials().user
+        self.password = GisCredentials().password
 
     def CreateFolderToSave(self):
-
          
         directory_path = [r'P:\2023',r'P:\2022']
 
@@ -36,58 +38,37 @@ class ExportSHP:
                     userhome = os.path.expanduser('~')
                     WorkFolder = os.path.join(userhome, 'Downloads')
                     return WorkFolder
+            
+        print(WorkFolder)
         
+  
     def ArcGISConnection(self):
         global gis
         # Connect to your ArcGIS Online organization
-        gis = GIS("https://mhpoly.maps.arcgis.com/", "TSCMHPoly", "n1H1p1*HZEO3")
+        gis = GIS("https://mhpoly.maps.arcgis.com/", self.username, self.password)
 
     def GetNamesLayers(self):
-
-        ##################
 
         # Search for the feature layer by its name
         feature_layer_name = self.project_name
         results = gis.content.search(query=feature_layer_name, item_type="Feature Layer")
 
         if len(results) != 0: 
-            global feature_layer
-            # x.name is the name of the web feature layer! 
-            Names = [x.name for x in results]
-            for i in range(len(Names)):
+            Layer_names = []
+            NPs = []
+            for i in range(len(results)):
+                NP = results[i].id
+                layer_item = gis.content.get(NP)
+                for j in layer_item.layers:
+                    Layer_names.append(j.properties.name)
+                    NPs.append(NP)
 
-                if Names[i] == 'Boringen_HBR':
-                    NP = results[i].id
-                    layer_item = gis.content.get(NP)
-                    feature_layer  = layer_item.layers
-                    Layers_Names = []
-                    for x in feature_layer:
-                        Layers_Names.append(x.properties.name)
-                    return Layers_Names
-                    break
+            # Zip the two lists into a dictionary
+            global Dic1
+            Dic1 = dict(zip(Layer_names, NPs))
 
-
-
-                elif Names[i] == '22131V1_TE01_WBO_IJmuiden_Uitvoering_WFL1':
-                    NP = results[i].id
-                    layer_item = gis.content.get(NP)
-                    feature_layer  = layer_item.layers
-                    Layers_Names = []
-                    for x in feature_layer:
-                        Layers_Names.append(x.properties.name)
-                    return Layers_Names
-                    break
-            
-
-            NP = results[0].id
-            layer_item = gis.content.get(NP)
-            feature_layer  = layer_item.layers
-            Layers_Names = []
-            for x in feature_layer:
-                Layers_Names.append(x.properties.name)
-            return Layers_Names
-            
-        
+            return(list(Dic1.keys()))
+                   
         else:
 
             message = "Er is geeen project {} gevonden. Probeer het nog eens!".format(self.project_name)
@@ -99,6 +80,10 @@ class ExportSHP:
 
 
     def DownloadLayer(self, NameLayer,save_path):
+
+        NP = Dic1[NameLayer]
+        layer_item = gis.content.get(NP)
+        feature_layer  = layer_item.layers
         
         for layer in feature_layer:
             if layer.properties.name == NameLayer:
@@ -118,14 +103,13 @@ class ExportSHP:
                             Layer_To_Download.properties.name)
             os.makedirs(output_folder, exist_ok=True)
 
-        try: 
+        if Layer_To_Download.properties.geometryType == 'esriGeometryPoint':
             #For the boringen layer
             # Query the feature layer and download the results as a SHP file
-            print(Layer_To_Download.properties.name)
             query_result = Layer_To_Download.query(where="1=1", out_fields=["NR,X,Y"], return_geometry=True)
             query_result.save(out_name = Layer_To_Download.properties.name + ".shp", save_location = output_folder)
 
-        except: 
+        elif Layer_To_Download.properties.geometryType == 'esriGeometryPolygon':
             
             try:
             #For the vakken layer
@@ -135,7 +119,7 @@ class ExportSHP:
             except: 
                 #For the vakken layer
                 # Query the feature layer and download the results as a SHP file
-                query_result = Layer_To_Download.query(where="1=1", out_fields=["NR,Shape_Area"], return_geometry=True)
+                query_result = Layer_To_Download.query(where="1=1", return_geometry=True)
                 query_result.save(out_name = Layer_To_Download.properties.name + ".shp", save_location = output_folder)
 
         # Set the name for the zip file to be created
@@ -155,10 +139,10 @@ class ExportSHP:
         return output_folder
 #In[]:
 
-# Testen = ExportSHP(project_name="23001")
+# Testen = ExportSHP(project_name="23121")
 # f = Testen.CreateFolderToSave()
 # Testen.ArcGISConnection()
 # Names = Testen.GetNamesLayers()
-# Testen.DownloadLayer(NameLayer=Names[0],save_path=f)
-
+# Testen.DownloadLayer(NameLayer=Names[3],save_path=f)
 #In[]:
+

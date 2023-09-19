@@ -5,14 +5,11 @@ from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import *
 from PIL import ImageTk, Image
+from tkinter import messagebox
 from Coordinaten import ArcGIS
 from ExportSHP  import ExportSHP
-from tkinter import messagebox
 
 window = tk.Tk()
-
-# window.geometry("550x300+300+150")
-# window.resizable(width=True, height=True)
 
 class Vista:
 
@@ -68,23 +65,13 @@ class Vista:
         # First consult and see if there's more than one or more projects
 
         Label(CöordinatenFrame,
-        text="Gewenst formaat:").grid(row=0, column=0, pady=5, sticky="w")
-
-        Label(CöordinatenFrame,
-        text="Database raadplegen:").grid(row=1, column=0, pady=5, sticky="w")
+        text="Database raadplegen:").grid(row=0, column=0, pady=5, sticky="w")
 
         #Coordinates button
 
         Get_Coordinates_Button = tk.Button(CöordinatenFrame,text = "Raadplegen"
                                         ,command = self.Coordinaten)
-        Get_Coordinates_Button.grid(row=1,column=1, padx=10,pady=10,sticky='nsew')
-
-       # Create a combobox to select the desired format
-        global Format_Combobox
-        Format_Combobox = ttk.Combobox(CöordinatenFrame, width=20, values=["punt scheidingsteken", "komma scheidingsteken","Excel Bestand"]
-            )
-        Format_Combobox.grid(row=0,column=1,sticky=tk.E + tk.W + tk.N + tk.S, pady=5,)
-        Format_Combobox.current(0)
+        Get_Coordinates_Button.grid(row=0,column=1, padx=10,pady=10,sticky='nsew')
 
 
         # Frame Download Shapefiles 
@@ -99,10 +86,6 @@ class Vista:
         GetAvailableLayers = tk.Button(SHP_Download_Frame,text = "Raadplegen"
                                         ,command = self.ListLayers)
         GetAvailableLayers.grid(row=0,column=0, padx=10,pady=10,sticky="nsew")
-        # Label(SHP_Download_Frame,
-        # text="Lagen raadplegen").grid(row=0, column=0, pady=5, sticky="w")
-
-        # Frame Créditos
 
         credit_frame = tk.LabelFrame(window,
                                             text="Contact persoon", relief=tk.RIDGE)
@@ -117,6 +100,7 @@ class Vista:
 
        
     # METHODS FOR THE APPLICATION - UP TO HIER WAS USER INTERFACE
+    # LET'S START WITH THE METHODS
 
 
 
@@ -129,28 +113,30 @@ class Vista:
         try:
             unique_projects = Pandas['Project'].unique().tolist()
         except: 
-            #NVT = Niet van Toepassing
+            #NVT = Niet van Toepassing. In case I do not have more 
                 unique_projects = ["NVT"]
+
         if len(unique_projects) >= 2:
             # Create a combobox to select the project
             global project_combobox
             project_combobox = ttk.Combobox(CöordinatenFrame, width=20, values=unique_projects
                 )
-            project_combobox.grid(row=2,column=1,sticky=tk.E + tk.W + tk.N + tk.S, pady=5,)
+            project_combobox.grid(row=1,column=1,sticky=tk.E + tk.W + tk.N + tk.S, pady=5,)
             #Create buttom to download the results of an specific project
             DownloadProject = tk.Button(CöordinatenFrame,text = "Downloaden" 
             ,command = self.SpecificProjectDownload)
-            DownloadProject.grid(row=2,column=0, padx=0,pady=0)
+            DownloadProject.grid(row=1,column=0, padx=0,pady=0)
         else:
-            Project.Download(Pandas,format=Format_Combobox.get(),ProjectName=R[0],LayerName=R[1])
+            Project.Download(Pandas,ProjectName=self.Project_Number.get(),LayerName=R[1])
             window.destroy()
 
-    def SpecificProjectDownload(self):        
-        Project = ArcGIS(self.Project_Number.get())
+    def SpecificProjectDownload(self):      
+        Project = ArcGIS(project_name=self.Project_Number.get())
         Pandas = Project.get_coordinates(R[2])
-        Filtered_Df = ArcGIS().filter_dataframe(Pandas,SpecificProject=project_combobox.get()
-                                                ,Format_Output=Format_Combobox.get(),
-                                                ProjectName=R[0],LayerName=R[1])
+        Filtered_Df = Project.filter_dataframe(pandas=Pandas,
+                                                SpecificProject=project_combobox.get(),
+                                                ProjectName=self.Project_Number.get(),
+                                                LayerName=R[1])
         window.destroy()
 
     def ListLayers (self):
