@@ -5,8 +5,9 @@ import pandas as pd
 import os 
 from tkinter import messagebox
 from ExportSHP  import ExportSHP
-from Credentials import GisCredentials
+from GISDetails import GisCredentials
 import re 
+import sys
 
 #In[]: 
 
@@ -17,8 +18,7 @@ class ArcGIS:
         self.project_name = project_name
 
         # Username and password extracted from another class 
-        self.username =  GisCredentials().user
-        self.password = GisCredentials().password
+        self.client_id=GisCredentials().client_id
         self.pattern = r'bor.*'
         self.waypointstructure = "[Waypoint(0)] \nType = 0 \nXwp = xcoord \nYwp = ycoord \nZwp = 0\nName = boornum. \n\n"
 
@@ -26,7 +26,7 @@ class ArcGIS:
 
         global gis
         # Connect to your ArcGIS Online organization
-        gis = GIS("https://mhpoly.maps.arcgis.com/", self.username, self.password)
+        gis = GIS("https://mhpoly.maps.arcgis.com", client_id=self.client_id)
         # Search for the feature layer by its name
         feature_layer_name = self.project_name
         results = gis.content.search(query=feature_layer_name, item_type="Feature Layer")
