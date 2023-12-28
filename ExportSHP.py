@@ -3,7 +3,7 @@ from arcgis.gis import GIS
 import os 
 import zipfile
 from tkinter import messagebox
-from Credentials import GisCredentials
+from GISDetails import GisCredentials
 
 #In[]:
 
